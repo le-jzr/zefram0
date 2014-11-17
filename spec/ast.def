@@ -1,6 +1,23 @@
 
-type PrimaryExpr = Identifier | Constant | StringLiteral | Parenthesised
-type PostfixExpr = PrimaryExpr | IndexerExpr | FuncCallExpr | SelectorExpr | PostIncrementExpr | PostDecrementExpr | StructLiteral
+type IDENTIFIER
+type STRING
+type DECIMAL
+type CHAR
+type HEXADECIMAL
+type OCTAL
+
+type PrimaryExpr = Identifier | ConstantExpr | StringLiteral | Parenthesised
+type PostfixExpr = PrimaryExpr | IndexerExpr | FuncCallExpr | SelectorExpr | PostIncrementExpr | PostDecrementExpr
+
+// $val
+type StringLiteral = struct {
+	val: STRING
+}
+
+// ( $inner )
+type Parenthesised = struct {
+	inner: Expression
+}
 
 // $name
 // $pkg :: $name
@@ -41,16 +58,6 @@ type PostDecrementExpr = struct {
 	base: PostfixExpr
 }
 
-// ( $type ) { $initializers }
-// ( $type ) { $initializers , }
-type StructLiteral = struct {
-	type: TypeName
-	
-	// separator ,
-	// min_length 1
-	initializers: []DesignatedInitializer
-}
-
 type UnaryExpr = PostfixExpr | PreIncrementExpr | PreDecrementExpr | UnaryOpExpr | SizeofExpr | AlignofExpr
 
 // ++ $base
@@ -66,14 +73,14 @@ type PreDecrementExpr = struct {
 // sizeof $expr
 // sizeof ( $type )
 type SizeofExpr = struct {
-	expr: ?UnaryExpression
-	type: ?TypeName
+	expr: ?UnaryExpr
+	type: ?Type
 }
 
 // _Alignof ( $type )
 // alignof ( $type )
 type AlignofExpr = struct {
-	type: TypeName
+	type: Type
 }
 
 type CastExpr = UnaryExpr | TypeCastOpExpr
@@ -111,7 +118,7 @@ type UnaryOpExpr = struct {
 
 // ( $typ ) $inner
 type TypeCastOpExpr = struct {
-	typ: TypeName
+	typ: Type
 	inner: CastExpr
 }
 
@@ -233,6 +240,11 @@ type AssignmentOpExpr = struct {
 	right: AssignmentExpr
 }
 
+// $left , $right
+type CommaOpExpr = struct {
+	left: Expression
+	right: AssignmentExpr
+}
 
 
 
@@ -266,7 +278,7 @@ type IdentifierLabeledStatement = struct {
 
 // case $expr : $stmt
 type CaseLabeledStatement = struct {
-	expr: ConstantExpression
+	expr: ConstantExpr
 	stmt: Statement
 }
 
@@ -282,7 +294,8 @@ type CompoundStatement = struct {
 
 type BlockItem = Declaration | Statement
 
-// $expr? ;
+// $expr ;
+// ;
 type ExpressionStatement = struct {
 	expr: ?Expression
 }
@@ -309,14 +322,24 @@ type WhileStatement = struct {
 	stmt: Statement
 }
 
-// do $stmt while ( $expr) ;
+// do $stmt while ( $expr ) ;
 type DoStatement = struct {
 	expr: Expression
 	stmt: Statement
 }
 
-// for ( $init? ; $cond? ; $adv? ) $stmt
-// for ( $decl $cond? ; $adv? ) $stmt
+// for ( $init ; $cond ; $adv ) $stmt
+// for ( $init ; $cond ; ) $stmt
+// for ( $init ; ; $adv ) $stmt
+// for ( $init ; ; ) $stmt
+// for ( ; $cond ; $adv ) $stmt
+// for ( ; $cond ; ) $stmt
+// for ( ; ; $adv ) $stmt
+// for ( ; ; ) $stmt
+// for ( $decl $cond ; $adv ) $stmt
+// for ( $decl ; $adv ) $stmt
+// for ( $decl $cond ; ) $stmt
+// for ( $decl ; ) $stmt
 type ForStatement = struct {
 	decl: ?Declaration
 	init: ?Expression
@@ -340,7 +363,8 @@ type ContinueStatement = struct {
 type BreakStatement = struct {
 }
 
-// return $expr? ;
+// return $expr ;
+// return ;
 type ReturnStatement = struct {
 	expr: ?Expression
 }
@@ -383,8 +407,6 @@ type PointerType = struct {
 	inner: Type
 }
 
-// $modifier $inner:ModifiedType
-// $modifier $inner:NamedType
 // $modifier ( $inner )
 type ModifiedType = struct {
 	modifier: TypeModifier
@@ -417,7 +439,7 @@ type TypeModifier = enum {
 
 
 
-
+type Global = TranslationUnit
 
 type TranslationUnit = struct {
 	units: []CodeUnit
@@ -437,6 +459,7 @@ type PackageDeclaration = struct {
 // import $name from $pkg ;
 // import $name ( $syms ) from $pkg ;
 type Import = struct {
+	pkg: STRING
 	name: IDENTIFIER
 	// separator ,
 	syms: []IDENTIFIER
@@ -450,7 +473,7 @@ type FuncDef = struct {
 	rettype: Type
 	name: IDENTIFIER
 	// separator ,
-	params: []ExplicitVarDecl
+	params: []ParamDecl
 	mods: []FunctionModifier
 	body: ?CompoundStatement
 }
@@ -474,7 +497,7 @@ type InlineModifier = struct {
 type ConstDef = struct {
 	type: ?Type
 	name: IDENTIFIER
-	value: ConstantExpression
+	value: ConstantExpr
 }
 
 // $type $name ;
@@ -482,7 +505,7 @@ type ConstDef = struct {
 type VarDef = struct {
 	type: Type
 	name: IDENTIFIER
-	value: ?ConstantExpression
+	value: ?ConstantExpr
 }
 
 type TypeDef = EnumDef | StructDef | DelegateDef | AliasDef
@@ -502,7 +525,7 @@ type EnumDef = struct {
 // $name = $value
 type EnumValue = struct {
 	name: IDENTIFIER
-	value: ?ConstantExpression
+	value: ?ConstantExpr
 }
 
 // struct $name { $members } ;
@@ -530,5 +553,13 @@ type DelegateDef = struct {
 	rettype: Type
 	name: IDENTIFIER
 	// separator ,
-	params: []ExplicitVarDecl
+	params: []ParamDecl
 }
+
+// $type $name
+type ParamDecl = struct {
+	type: Type
+	name: IDENTIFIER
+}
+
+type Declaration = VarDef

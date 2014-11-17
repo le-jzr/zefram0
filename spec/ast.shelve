@@ -1,0 +1,39 @@
+
+// ( $type ) { $initializers }
+// ( $type ) { $initializers , }
+type StructLiteral = struct {
+	type: Type
+	
+	// separator ,
+	// min_length 1
+	initializers: []DesignatedInitializer
+}
+
+// $designators = $initializer
+// $initializer
+type DesignatedInitializer = struct {
+	// min_length 1
+	designators: []Designator
+	
+	initializer: Initializer
+}
+
+type Initializer = 
+
+type Designator = StructDesignator | ArrayDesignator
+
+// . $name
+type StructDesignator = struct {
+	name: IDENTIFIER
+}
+
+// [ $index ]
+type ArrayDesignator = struct {
+	index: ConstantExpr
+}
+
+// $modifier $inner:ModifiedType
+// $modifier $inner:NamedType
+
+// for ( $init? ; $cond? ; $adv? ) $stmt
+// for ( $decl $cond? ; $adv? ) $stmt
