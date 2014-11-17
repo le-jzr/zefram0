@@ -1,0 +1,534 @@
+
+type PrimaryExpr = Identifier | Constant | StringLiteral | Parenthesised
+type PostfixExpr = PrimaryExpr | IndexerExpr | FuncCallExpr | SelectorExpr | PostIncrementExpr | PostDecrementExpr | StructLiteral
+
+// $name
+// $pkg :: $name
+type Identifier = struct {
+	pkg: ?IDENTIFIER
+	name: IDENTIFIER
+}
+
+// $base [ $index ]
+type IndexerExpr = struct {
+	base: PostfixExpr
+	index: Expression
+}
+
+// $callee ( $args )
+type FuncCallExpr = struct {
+	callee: PostfixExpr
+	
+	// separator ,
+	args: []AssignmentExpr
+}
+
+// $base . $tag
+// $base -> $tag $pointerbase
+type SelectorExpr = struct {
+	base: PostfixExpr
+	tag: IDENTIFIER
+	pointerbase: bool
+}
+
+// $base ++
+type PostIncrementExpr = struct {
+	base: PostfixExpr
+}
+
+// $base --
+type PostDecrementExpr = struct {
+	base: PostfixExpr
+}
+
+// ( $type ) { $initializers }
+// ( $type ) { $initializers , }
+type StructLiteral = struct {
+	type: TypeName
+	
+	// separator ,
+	// min_length 1
+	initializers: []DesignatedInitializer
+}
+
+type UnaryExpr = PostfixExpr | PreIncrementExpr | PreDecrementExpr | UnaryOpExpr | SizeofExpr | AlignofExpr
+
+// ++ $base
+type PreIncrementExpr = struct {
+	base: UnaryExpr
+}
+
+// -- $base
+type PreDecrementExpr = struct {
+	base: UnaryExpr
+}
+
+// sizeof $expr
+// sizeof ( $type )
+type SizeofExpr = struct {
+	expr: ?UnaryExpression
+	type: ?TypeName
+}
+
+// _Alignof ( $type )
+// alignof ( $type )
+type AlignofExpr = struct {
+	type: TypeName
+}
+
+type CastExpr = UnaryExpr | TypeCastOpExpr
+
+type MultiplicativeExpr = CastExpr | MultiplicativeOpExpr
+type AdditiveExpr = MultiplicativeExpr | AdditiveOpExpr
+type ShiftExpr = AdditiveExpr | ShiftOpExpr
+type RelationalExpr = ShiftExpr | RelationalOpExpr
+type EqualityExpr = RelationalExpr | EqualityOpExpr
+type AndExpr = EqualityExpr | BitAndOpExpr
+type ExclusiveOrExpr = AndExpr | BitXorOpExpr
+type InclusiveOrExpr = ExclusiveOrExpr | BitOrOpExpr
+type LogicalAndExpr = InclusiveOrExpr | LogAndOpExpr
+type LogicalOrExpr = LogicalAndExpr | LogOrOpExpr
+type ConditionalExpr = LogicalOrExpr | ConditionalOpExpr
+type AssignmentExpr = ConditionalExpr | AssignmentOpExpr
+type Expression = AssignmentExpr | CommaOpExpr
+
+type ConstantExpr = ConditionalExpr
+
+type UnaryOp = enum {
+	REF    &
+	DEREF  *
+	PLUS   +
+	MINUS  -
+	INVERT ~
+	NOT    !
+}
+
+// $op $inner
+type UnaryOpExpr = struct {
+	op: UnaryOp
+	inner: CastExpr
+}
+
+// ( $typ ) $inner
+type TypeCastOpExpr = struct {
+	typ: TypeName
+	inner: CastExpr
+}
+
+type MultiplicativeOp = enum {
+	MUL *
+	DIV /
+	MOD %
+}
+
+// $left $op $right
+type MultiplicativeOpExpr = struct {
+	op: MultiplicativeOp
+	left: MultiplicativeExpr
+	right: CastExpr
+}
+
+type AdditiveOp = enum {
+	PLUS  +
+	MINUS -
+}
+
+// $left $op $right
+type AdditiveOpExpr = struct {
+	op: AdditiveOp
+	left: AdditiveExpr
+	right: MultiplicativeExpr
+}
+
+type ShiftOp = enum {
+	LSHIFT <<
+	RSHIFT >>
+}
+
+// $left $op $right
+type ShiftOpExpr = struct {
+	op: ShiftOp
+	left: ShiftExpr
+	right: AdditiveExpr
+}
+
+type RelationalOp = enum {
+	LESS_THAN    <
+	GREATER_THAN >
+	LESS_EQ      <=
+	GREATER_EQ   >=
+}
+
+// $left $op $right
+type RelationalOpExpr = struct {
+	op: RelationalOp
+	left: RelationalExpr
+	right: ShiftExpr
+}
+
+// $left == $right
+// $left != $right $negated
+type EqualityOpExpr = struct {
+	negated: bool
+	left: EqualityExpr
+	right: RelationalExpr
+}
+
+// $left & $right
+type BitAndOpExpr = struct {
+	left: AndExpr
+	right: EqualityExpr
+}
+
+// $left ^ $right
+type BitXorOpExpr = struct {
+	left: ExclusiveOrExpr
+	right: AndExpr
+}
+
+// $left | $right
+type BitOrOpExpr = struct {
+	left: InclusiveOrExpr
+	right: ExclusiveOrExpr
+}
+
+// $left && $right
+type LogAndOpExpr = struct {
+	left: LogicalAndExpr
+	right: InclusiveOrExpr
+}
+
+// $left || $right
+type LogOrOpExpr = struct {
+	left: LogicalOrExpr
+	right: LogicalAndExpr
+}
+
+// $condition ? $left : $right
+type ConditionalOpExpr = struct {
+	condition: LogicalOrExpr
+	left: Expression 
+	right: ConditionalExpr
+}
+
+
+type AssignmentOp = enum {
+	PLAIN     =
+	MUL      *=
+	DIV      /=
+	MOD      %=
+	PLUS     +=
+	MINUS    -=
+	LSHIFT  <<=
+	RSHIFT  >>=
+	BITAND   &=
+	BITXOR   ^=
+	BITOR    |=
+}
+
+// $left $op $right
+type AssignmentOpExpr = struct {
+	op: AssignmentOp
+	left: UnaryExpr
+	right: AssignmentExpr
+}
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+type Statement = LabeledStatement | CompoundStatement | ExpressionStatement | IfStatement | SwitchStatement | IterationStatement | JumpStatement
+
+type LabeledStatement = IdentifierLabeledStatement | CaseLabeledStatement | DefaultLabeledStatement
+
+// $label : $stmt
+type IdentifierLabeledStatement = struct {
+	label: IDENTIFIER
+	stmt: Statement
+}
+
+// case $expr : $stmt
+type CaseLabeledStatement = struct {
+	expr: ConstantExpression
+	stmt: Statement
+}
+
+// default : $stmt
+type DefaultLabeledStatement = struct {
+	stmt: Statement
+}
+
+// { $stmts }
+type CompoundStatement = struct {
+	stmts: []BlockItem
+}
+
+type BlockItem = Declaration | Statement
+
+// $expr? ;
+type ExpressionStatement = struct {
+	expr: ?Expression
+}
+
+// if ( $expr ) $true_branch
+// if ( $expr ) $true_branch else $false_branch
+type IfStatement = struct {
+	expr: Expression
+	true_branch: Statement
+	false_branch: ?Statement
+}
+
+// switch ( $expr ) $stmt
+type SwitchStatement = struct {
+	expr: Expression
+	stmt: Statement
+}
+
+type IterationStatement = WhileStatement | DoStatement | ForStatement
+
+// while ( $expr ) $stmt
+type WhileStatement = struct {
+	expr: Expression
+	stmt: Statement
+}
+
+// do $stmt while ( $expr) ;
+type DoStatement = struct {
+	expr: Expression
+	stmt: Statement
+}
+
+// for ( $init? ; $cond? ; $adv? ) $stmt
+// for ( $decl $cond? ; $adv? ) $stmt
+type ForStatement = struct {
+	decl: ?Declaration
+	init: ?Expression
+	cond: ?Expression
+	adv: ?Expression
+	stmt: Statement
+}
+
+type JumpStatement = GotoStatement | ContinueStatement | BreakStatement | ReturnStatement
+
+// goto $label ;
+type GotoStatement = struct {
+	label: IDENTIFIER
+}
+
+// continue ;
+type ContinueStatement = struct {
+}
+
+// break ;
+type BreakStatement = struct {
+}
+
+// return $expr? ;
+type ReturnStatement = struct {
+	expr: ?Expression
+}
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+type Type = NamedType | ArrayType | PointerType | ModifiedType
+
+// $name
+// $pkg :: $name
+type NamedType = struct {
+	pkg: ?IDENTIFIER
+	name: IDENTIFIER
+}
+
+// $inner [ ]
+// $inner [ $length ]
+type ArrayType = struct {
+	inner: Type
+	length: ?ConstantExpr
+}
+
+// $inner *
+type PointerType = struct {
+	inner: Type
+}
+
+// $modifier $inner:ModifiedType
+// $modifier $inner:NamedType
+// $modifier ( $inner )
+type ModifiedType = struct {
+	modifier: TypeModifier
+	inner: Type
+}
+
+type TypeModifier = enum {
+	CONST    const
+	VOLATILE volatile
+	NONULL   nonull
+}
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+type TranslationUnit = struct {
+	units: []CodeUnit
+}
+
+type CodeUnit = struct {
+	pkgdecl: PackageDeclaration
+	imports: []Import
+	defs: []Definition
+}
+
+// package $name ;
+type PackageDeclaration = struct {
+	name: STRING
+}
+
+// import $name from $pkg ;
+// import $name ( $syms ) from $pkg ;
+type Import = struct {
+	name: IDENTIFIER
+	// separator ,
+	syms: []IDENTIFIER
+}
+
+type Definition = FuncDef | ConstDef | VarDef | TypeDef
+
+// $rettype $name ( $params ) $mods $body
+// $rettype $name ( $params ) $mods ;
+type FuncDef = struct {
+	rettype: Type
+	name: IDENTIFIER
+	// separator ,
+	params: []ExplicitVarDecl
+	mods: []FunctionModifier
+	body: ?CompoundStatement
+}
+
+type FunctionModifier = NoReturnModifier | ExternModifier | InlineModifier
+
+// noreturn
+type NoReturnModifier = struct {
+}
+
+// extern
+type ExternModifier = struct {
+}
+
+// inline
+type InlineModifier = struct {
+}
+
+// const $name = $value ;
+// const $type $name = $value ;
+type ConstDef = struct {
+	type: ?Type
+	name: IDENTIFIER
+	value: ConstantExpression
+}
+
+// $type $name ;
+// $type $name = $value ;
+type VarDef = struct {
+	type: Type
+	name: IDENTIFIER
+	value: ?ConstantExpression
+}
+
+type TypeDef = EnumDef | StructDef | DelegateDef | AliasDef
+
+// enum $name { $values } ;
+// enum $name { $values , } ;
+// enum $name { $values }
+// enum $name { $values , }
+type EnumDef = struct {
+	name: IDENTIFIER
+	// separator ,
+	// min_length 1
+	values: []EnumValue
+}
+
+// $name
+// $name = $value
+type EnumValue = struct {
+	name: IDENTIFIER
+	value: ?ConstantExpression
+}
+
+// struct $name { $members } ;
+// struct $name { $members }
+type StructDef = struct {
+	name: IDENTIFIER
+	// min_length 1
+	members: []StructMember
+}
+
+// $type $name ;
+type StructMember = struct {
+	type: Type
+	name: IDENTIFIER
+}
+
+// type $name = $type ;
+type AliasDef = struct {
+	name: IDENTIFIER
+	type: Type
+}
+
+// delegate $rettype $name ( $params ) ;
+type DelegateDef = struct {
+	rettype: Type
+	name: IDENTIFIER
+	// separator ,
+	params: []ExplicitVarDecl
+}
