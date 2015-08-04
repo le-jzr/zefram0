@@ -37,3 +37,25 @@ type ArrayDesignator = struct {
 
 // for ( $init? ; $cond? ; $adv? ) $stmt
 // for ( $decl $cond? ; $adv? ) $stmt
+
+
+
+
+
+// enum $name { $values } ;
+// enum $name { $values , } ;
+// enum $name { $values }
+// enum $name { $values , }
+type EnumDef = struct {
+	name: IDENTIFIER
+	// separator ,
+	// min_length 1
+	values: []EnumValue
+}
+
+// $name
+// $name = $value
+type EnumValue = struct {
+	name: IDENTIFIER
+	value: ?ConstantExpr
+}
